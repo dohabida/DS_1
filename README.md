@@ -2,3 +2,4 @@
 pandas
 streamlit
 streamlit-echarts
+st_echarts
