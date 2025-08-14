@@ -3,3 +3,4 @@ io
 streamlit
 pandas
 plotly
+plotly.graph_objects
