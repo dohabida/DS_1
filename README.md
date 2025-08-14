@@ -1,6 +1,7 @@
 # DS_1
 io
-streamlit
 pandas
-plotly
+streamlit
 plotly.graph_objects
+plotly.subplots
+make_subplots
