@@ -1,5 +1,5 @@
 # DS_1
-pandas
+io
 streamlit
-streamlit-echarts
-st_echarts
+pandas
+plotly
