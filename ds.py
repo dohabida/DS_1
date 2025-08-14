@@ -75,4 +75,94 @@ def pct(x: float) -> str:
 total_sales = sum(sales) if sales else 0
 avg_yoy = sum(yoy) / len(yoy) if yoy else 0.0
 imax = sales.index(max(sales)) if sales else 0
-imin = sales.index(min(sales)) if s
+imin = sales.index(min(sales)) if sales else 0
+max_month, max_value = (months[imax], sales[imax]) if sales else ("-", 0)
+min_month, min_value = (months[imin], sales[imin]) if sales else ("-", 0)
+
+# -----------------------------
+# 헤더 & KPI
+# -----------------------------
+st.title("월별 매출 대시보드 (Plotly/Streamlit)")
+st.caption("최근 12개월 매출 추이와 전년동월 대비 변화를 한눈에 확인하세요.")
+
+k1, k2, k3, k4 = st.columns(4)
+k1.metric("총매출", krw(total_sales), help="표시된 기간 합계")
+k2.metric("평균 증감률(YoY)", pct(avg_yoy), delta=f"{'상승' if avg_yoy>=0 else '하락'} 추세")
+k3.metric("최고 매출 월", f"{max_month} · {krw(max_value)}")
+k4.metric("최저 매출 월", f"{min_month} · {krw(min_value)}")
+
+# -----------------------------
+# Plotly 테마/색상
+# -----------------------------
+is_dark = (theme_choice == "Dark")
+template = "plotly_dark" if is_dark else "plotly_white"
+axis_color = "#cfd6ff" if is_dark else "#334155"
+accent = "#7aa2ff"
+accent2 = "#74e0c0"
+
+# -----------------------------
+# 1) 라인 차트 (매출액 vs 전년동월)
+# -----------------------------
+st.subheader("매출액 vs 전년동월")
+line_shape = "spline" if smooth_line else "linear"
+
+fig_line = go.Figure()
+fig_line.add_trace(go.Scatter(
+    x=months, y=sales, mode="lines+markers", name="매출액",
+    line=dict(width=3, color=accent, shape=line_shape),
+    marker=dict(size=8)
+))
+fig_line.add_trace(go.Scatter(
+    x=months, y=last_year, mode="lines+markers", name="전년동월",
+    line=dict(width=3, color=accent2, dash="dash", shape=line_shape),
+    marker=dict(size=8)
+))
+fig_line.update_layout(
+    template=template,
+    margin=dict(l=20, r=20, t=40, b=20),
+    yaxis_title="금액 (원)",
+    xaxis_title="월",
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+    font=dict(family="Noto Sans KR"),
+    hovermode="x unified",
+)
+# y축 라벨을 '백만원' 단위 안내 텍스트로 대체하고, 호버에는 원 단위 표시
+fig_line.update_yaxes(tickformat=",", title="금액 (원) · 호버로 확인")
+st.plotly_chart(fig_line, use_container_width=True, height=420)
+
+# -----------------------------
+# 2) 증감률 바 차트
+# -----------------------------
+st.subheader("전년동월 대비 증감률(%)")
+colors = ["#74e0c0" if v >= 0 else "#ff6689" for v in yoy]
+# bar_width_pct는 trace에 직접 퍼센트로 주지 못하므로 layout의 bargap으로 조정(0=가득, 0.5=얇음)
+# 막대가 넓을수록 bargap을 줄인다.
+bargap = max(0.0, min(0.5, (100 - bar_width_pct) / 200))  # 0~0.5
+
+fig_bar = go.Figure(data=[go.Bar(
+    x=months, y=yoy, name="증감률", marker_color=colors, hovertemplate="%{y:.1f}%<extra></extra>"
+)])
+fig_bar.update_layout(
+    template=template,
+    margin=dict(l=20, r=20, t=40, b=20),
+    yaxis_title="증감률 (%)",
+    xaxis_title="월",
+    bargap=bargap,
+    font=dict(family="Noto Sans KR"),
+)
+st.plotly_chart(fig_bar, use_container_width=True, height=380)
+
+# -----------------------------
+# 데이터 테이블 & 다운로드
+# -----------------------------
+st.subheader("원본 데이터")
+show_index = st.checkbox("인덱스 표시", value=False)
+st.dataframe(df, use_container_width=True, hide_index=not show_index)
+
+csv_bytes = df.to_csv(index=False).encode("utf-8-sig")
+st.download_button(
+    label="📥 현재 데이터 CSV 다운로드",
+    data=csv_bytes,
+    file_name="월별_매출_데이터.csv",
+    mime="text/csv",
+)
