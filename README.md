@@ -3,6 +3,3 @@ io
 pandas
 streamlit
 plotly
-plotly.graph_objects
-plotly.subplots
-make_subplots
