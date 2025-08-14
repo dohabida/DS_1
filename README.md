@@ -1,4 +1,5 @@
 # DS_1
 io
 pandas
-numpy
+streamlit
+streamlit_echarts
